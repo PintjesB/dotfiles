@@ -133,8 +133,12 @@ EOL
     
     # Add cron job
     echo -e "${YELLOW}⏲️  Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
-    (crontab -l 2>/dev/null | grep -v "chezmoi-cron.sh"; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
-}
+    if ! crontab -l | grep -q "$CRON_SCRIPT"; then
+        (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
+        echo -e "${GREEN}✓ Cron job added successfully${NC}"
+    else
+        echo -e "${YELLOW}✓ Cron job already exists${NC}"
+    fi}
 
 install_nerdfont() {
     echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
