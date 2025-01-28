@@ -138,7 +138,8 @@ EOL
         echo -e "${GREEN}✓ Cron job added successfully${NC}"
     else
         echo -e "${YELLOW}✓ Cron job already exists${NC}"
-    fi}
+    fi
+}
 
 install_nerdfont() {
     echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
