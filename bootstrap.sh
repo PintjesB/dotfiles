@@ -6,6 +6,7 @@ trap 'echo -e "\033[1;31mError at line $LINENO\033[0m"' ERR
 REPO_HTTPS="https://github.com/PintjesB/dotfiles.git"
 LOG_SETUP="${LOG_SETUP:-true}"  # Set to 'false' to disable logging
 INSTALL_NERDFONT="${INSTALL_NERDFONT:-true}"
+CRON_SCHEDULE="${CRON_SCHEDULE:-0 3 * * *}"  # Default: daily at 3 AM
 
 # Colors and formatting
 BOLD='\033[1m'
@@ -108,40 +109,61 @@ setup_chezmoi() {
     fi
 }
 
+setup_cronjob() {
+    echo -e "${BOLD}⏰ Configuring automatic updates...${NC}"
+    
+    # Create cron script
+    local CRON_SCRIPT="$HOME/.local/bin/chezmoi-cron.sh"
+    echo -e "${YELLOW}📝 Creating cron script at $CRON_SCRIPT${NC}"
+    
+    cat > "$CRON_SCRIPT" << 'EOL'
+#!/bin/bash
+CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
+LOG_FILE="$HOME/.chezmoi_cron.log"
+
+{
+    echo "=== Update started: $(date) ==="
+    "$CHEZMOI_BIN" update --verbose
+    echo "=== Update completed: $(date) ==="
+    echo ""
+} >> "$LOG_FILE" 2>&1
+EOL
+
+    chmod +x "$CRON_SCRIPT"
+    
+    # Add cron job
+    echo -e "${YELLOW}⏲️  Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
+    (crontab -l 2>/dev/null | grep -v "chezmoi-cron.sh"; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
+}
+
 install_nerdfont() {
     echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
     local FONT="FiraCode"
     local FONT_DIR="$HOME/.local/share/fonts"
 
-    # Ensure fontconfig is installed
     if ! command -v fc-cache >/dev/null; then
         echo -e "${YELLOW}📦 Installing fontconfig...${NC}"
         sudo DEBIAN_FRONTEND=noninteractive apt install -y fontconfig
     fi
 
-    # Create font directory if needed
     mkdir -p "$FONT_DIR"
 
     if [ ! -f "$FONT_DIR/${FONT}NerdFont-Regular.ttf" ]; then
         echo -e "${YELLOW}📦 Downloading ${FONT} Nerd Font...${NC}"
         
-        # Install required tools
         if ! command -v unzip >/dev/null; then
             sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip
         fi
 
-        # Download and extract font
         curl -fLo "/tmp/${FONT}.zip" \
             "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/${FONT}.zip"
         unzip -qo "/tmp/${FONT}.zip" -d "$FONT_DIR"
         rm -f "/tmp/${FONT}.zip"
 
-        # Update font cache
         echo -e "${YELLOW}🔄 Updating font cache...${NC}"
         fc-cache -f -v "$FONT_DIR"
     fi
 
-    # Skip verification and just report installation attempt
     echo -e "${YELLOW}⚠️  Skipping font verification - ensure terminal is configured to use Nerd Fonts${NC}"
     echo -e "${GREEN}✅ Font installation attempted. Manual verification recommended.${NC}"
 }
@@ -150,6 +172,10 @@ finalize() {
     echo -e "\n${GREEN}✅ Setup complete!${NC}"
     echo -e "${BOLD}Restart your terminal or run:${NC}"
     echo -e "  ${YELLOW}exec zsh${NC}"
+    echo -e "\n${BOLD}Cron job details:${NC}"
+    echo -e "  ${YELLOW}Schedule:${NC} $CRON_SCHEDULE"
+    echo -e "  ${YELLOW}Log file:${NC} ~/.chezmoi_cron.log"
+    echo -e "  ${YELLOW}View cron jobs:${NC} crontab -l"
 }
 
 # Main execution
@@ -159,4 +185,5 @@ install_dependencies
 install_nerdfont
 setup_shell
 setup_chezmoi
+setup_cronjob
 finalize
