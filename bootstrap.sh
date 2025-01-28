@@ -116,7 +116,7 @@ setup_cronjob() {
     local CRON_SCRIPT="$HOME/.local/bin/chezmoi-cron.sh"
     echo -e "${YELLOW}📝 Creating cron script at $CRON_SCRIPT${NC}"
     
-    cat > "$CRON_SCRIPT" <<- 'EOL'
+    cat > "$CRON_SCRIPT" <<- EOL
     #!/bin/bash
     CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
     LOG_FILE="$HOME/.chezmoi_cron.log"
