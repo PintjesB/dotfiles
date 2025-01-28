@@ -4,7 +4,6 @@ trap 'echo -e "\033[1;31mError at line $LINENO\033[0m"' ERR
 
 # Configuration
 REPO_HTTPS="https://github.com/PintjesB/dotfiles.git"
-CHEZMOI_VERSION="v2.45.1"
 LOG_SETUP="${LOG_SETUP:-true}"  # Set to 'false' to disable logging
 
 # Colors and formatting
@@ -74,10 +73,8 @@ install_dependencies() {
         if ! command -v starship >/dev/null; then
             echo -e "${YELLOW}🚀 Installing Starship...${NC}"
             mkdir -p ~/.local/bin
-            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir ~/.local/bin
+            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir ~/.local/bin -q
             export PATH="$HOME/.local/bin:$PATH"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
         fi
     fi
 }
@@ -97,7 +94,7 @@ setup_chezmoi() {
     if ! command -v chezmoi >/dev/null; then
         echo -e "${YELLOW}📦 Installing Chezmoi...${NC}"
         mkdir -p ~/.local/bin
-        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin -V "$CHEZMOI_VERSION"
+        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
         export PATH="$HOME/.local/bin:$PATH"
     fi
     
