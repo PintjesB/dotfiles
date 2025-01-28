@@ -116,17 +116,17 @@ setup_cronjob() {
     local CRON_SCRIPT="$HOME/.local/bin/chezmoi-cron.sh"
     echo -e "${YELLOW}📝 Creating cron script at $CRON_SCRIPT${NC}"
     
-    cat > "$CRON_SCRIPT" << 'EOL'
-#!/bin/bash
-CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
-LOG_FILE="$HOME/.chezmoi_cron.log"
-
-{
-    echo "=== Update started: $(date) ==="
-    "$CHEZMOI_BIN" update --verbose
-    echo "=== Update completed: $(date) ==="
-    echo ""
-} >> "$LOG_FILE" 2>&1
+    cat > "$CRON_SCRIPT" <<- 'EOL'
+    #!/bin/bash
+    CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
+    LOG_FILE="$HOME/.chezmoi_cron.log"
+    
+    {
+        echo "=== Update started: $(date) ==="
+        "$CHEZMOI_BIN" update --verbose
+        echo "=== Update completed: $(date) ==="
+        echo ""
+    } >> "$LOG_FILE" 2>&1
 EOL
 
     chmod +x "$CRON_SCRIPT"
