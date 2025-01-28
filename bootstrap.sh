@@ -110,7 +110,7 @@ setup_chezmoi() {
 
 install_nerdfont() {
     echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
-    local FONT="FiraCode"  # Choose a font: Hack, FiraCode, JetBrainsMono, etc.
+    local FONT="FiraCode"
 
     case $PLATFORM in
         macos)
