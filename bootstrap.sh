@@ -125,7 +125,7 @@ install_nerdfont() {
                 echo -e "${YELLOW}📦 Downloading ${FONT} Nerd Font...${NC}"
                 mkdir -p ~/.local/share/fonts
                 curl -fLo "~/.local/share/fonts/${FONT}NerdFont-Regular.ttf" \
-                    "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/${FONT}/Regular/complete/${FONT}%20Nerd%20Font%20Complete%20Mono.ttf"
+                    "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/${FONT}.zip"
                 fc-cache -f -v
             fi
             ;;
