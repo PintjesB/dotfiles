@@ -5,6 +5,7 @@ trap 'echo -e "\033[1;31mError at line $LINENO\033[0m"' ERR
 # Configuration
 REPO_HTTPS="https://github.com/PintjesB/dotfiles.git"
 LOG_SETUP="${LOG_SETUP:-true}"  # Set to 'false' to disable logging
+INSTALL_NERDFONT="${INSTALL_NERDFONT:-true}"
 
 # Colors and formatting
 BOLD='\033[1m'
@@ -105,11 +106,35 @@ setup_chezmoi() {
         echo -e "${YELLOW}🔄 Updating existing dotfiles...${NC}"
         chezmoi update --verbose
     fi
+}
 
-    # Ensure ~/.local/bin is in the PATH within .zshrc
-    if ! grep -qF 'export PATH="$HOME/.local/bin:$PATH"' ~/.zshrc; then
-        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-    fi
+install_nerdfont() {
+    echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
+    local FONT="FiraCode"  # Choose a font: Hack, FiraCode, JetBrainsMono, etc.
+
+    case $PLATFORM in
+        macos)
+            if ! brew list --cask "font-${FONT}-nerd-font" &>/dev/null; then
+                echo -e "${YELLOW}🍺 Installing ${FONT} Nerd Font via Homebrew...${NC}"
+                brew tap homebrew/cask-fonts
+                brew install --cask "font-${FONT}-nerd-font"
+            fi
+            ;;
+        debian|ubuntu|pop)
+            if [ ! -f "~/.local/share/fonts/${FONT}NerdFont-Regular.ttf" ]; then
+                echo -e "${YELLOW}📦 Downloading ${FONT} Nerd Font...${NC}"
+                mkdir -p ~/.local/share/fonts
+                curl -fLo "~/.local/share/fonts/${FONT}NerdFont-Regular.ttf" \
+                    "https://github.com/ryanoasis/nerd-fonts/raw/master/patched-fonts/${FONT}/Regular/complete/${FONT}%20Nerd%20Font%20Complete%20Mono.ttf"
+                fc-cache -f -v
+            fi
+            ;;
+        fedora|arch)
+            # Similar logic for other distros
+            ;;
+    esac
+
+    echo -e "${GREEN}✅ Nerd Font installed. Restart your terminal/app and select '${FONT} Nerd Font' in settings.${NC}"
 }
 
 finalize() {
@@ -122,6 +147,7 @@ finalize() {
 echo -e "${BOLD}🖥️ Starting automated dotfiles setup...${NC}"
 detect_platform
 install_dependencies
+install_nerdfont
 setup_shell
 setup_chezmoi
 finalize
