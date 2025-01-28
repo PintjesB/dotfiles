@@ -105,6 +105,11 @@ setup_chezmoi() {
         echo -e "${YELLOW}🔄 Updating existing dotfiles...${NC}"
         chezmoi update --verbose
     fi
+
+    # Ensure ~/.local/bin is in the PATH within .zshrc
+    if ! grep -qF 'export PATH="$HOME/.local/bin:$PATH"' ~/.zshrc; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+    fi
 }
 
 finalize() {
