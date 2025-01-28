@@ -2,6 +2,11 @@
 set -euo pipefail
 trap 'echo -e "\033[1;31mError at line $LINENO\033[0m"' ERR
 
+# Configuration
+REPO_HTTPS="https://github.com/PintjesB/dotfiles.git"
+CHEZMOI_VERSION="v2.45.1"
+LOG_SETUP="${LOG_SETUP:-true}"  # Set to 'false' to disable logging
+
 # Colors and formatting
 BOLD='\033[1m'
 GREEN='\033[0;32m'
@@ -10,8 +15,10 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Initialize logging
-exec > >(tee -i setup.log)
-exec 2>&1
+if [[ "$LOG_SETUP" == "true" ]]; then
+    exec > >(tee -i setup.log)
+    exec 2>&1
+fi
 
 detect_platform() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -39,7 +46,6 @@ install_dependencies() {
     echo -e "${BOLD}📦 Installing system dependencies...${NC}"
     
     if [[ "$PLATFORM" == "macos" ]]; then
-        # Install Homebrew if missing
         if ! command -v brew >/dev/null; then
             echo -e "${YELLOW}🍺 Installing Homebrew...${NC}"
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -65,13 +71,13 @@ install_dependencies() {
                 ;;
         esac
         
-        # Install Starship if not available
         if ! command -v starship >/dev/null; then
             echo -e "${YELLOW}🚀 Installing Starship...${NC}"
-            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir "$HOME/.local/bin"
+            mkdir -p ~/.local/bin
+            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir ~/.local/bin
             export PATH="$HOME/.local/bin:$PATH"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
-            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
         fi
     fi
 }
@@ -79,32 +85,25 @@ install_dependencies() {
 setup_shell() {
     echo -e "${BOLD}🐚 Configuring Zsh...${NC}"
     
-    # Set default shell if not already Zsh
     if [[ "$SHELL" != *"zsh"* ]]; then
         echo -e "${YELLOW}🔀 Changing default shell to Zsh...${NC}"
         sudo chsh -s "$(command -v zsh)" "$USER"
-    fi
-    
-    # Ensure Zsh is executed after configuration
-    if [[ ! -f "$HOME/.zshrc" ]]; then
-        touch "$HOME/.zshrc"
     fi
 }
 
 setup_chezmoi() {
     echo -e "${BOLD}🛠️ Setting up dotfiles with Chezmoi...${NC}"
     
-    # Install Chezmoi if missing
     if ! command -v chezmoi >/dev/null; then
         echo -e "${YELLOW}📦 Installing Chezmoi...${NC}"
-        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin" "v2.45.1"
+        mkdir -p ~/.local/bin
+        sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin -V "$CHEZMOI_VERSION"
         export PATH="$HOME/.local/bin:$PATH"
     fi
     
-    # Apply dotfiles
-    if [[ ! -d "$HOME/.local/share/chezmoi" ]]; then
+    if [[ ! -d ~/.local/share/chezmoi ]]; then
         echo -e "${YELLOW}🚀 Initializing dotfiles...${NC}"
-        chezmoi init --apply --verbose "https://github.com/PintjesB/dotfiles.git"
+        chezmoi init --apply --verbose "$REPO_HTTPS"
     else
         echo -e "${YELLOW}🔄 Updating existing dotfiles...${NC}"
         chezmoi update --verbose
@@ -115,12 +114,10 @@ finalize() {
     echo -e "\n${GREEN}✅ Setup complete!${NC}"
     echo -e "${BOLD}Restart your terminal or run:${NC}"
     echo -e "  ${YELLOW}exec zsh${NC}"
-    echo -e "${BOLD}To verify everything:${NC}"
-    echo -e "  ${YELLOW}chezmoi doctor${NC}"
 }
 
 # Main execution
-echo -e "${BOLD}🖥️ Starting automated system setup...${NC}"
+echo -e "${BOLD}🖥️ Starting automated dotfiles setup...${NC}"
 detect_platform
 install_dependencies
 setup_shell
