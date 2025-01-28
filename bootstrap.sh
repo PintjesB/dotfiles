@@ -141,11 +141,11 @@ install_nerdfont() {
         fc-cache -f -v "$FONT_DIR"
     fi
 
-    # Verify font installation
-    if ! fc-list | grep -i "Fira Code" >/dev/null; then
-        echo -e "${RED}⛔ Font installation verification failed!${NC}"
-        exit 1
-    fi
+# Verify font installation
+if ! fc-list | grep -i "Fira[ -]Code" >/dev/null; then
+    echo -e "${RED}⛔ Font installation verification failed!${NC}"
+    exit 1
+fi
 
     echo -e "${GREEN}✅ Nerd Font installed successfully.${NC}"
 }
