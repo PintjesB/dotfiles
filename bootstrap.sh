@@ -112,64 +112,42 @@ install_nerdfont() {
     echo -e "${BOLD}🔠 Installing Nerd Font...${NC}"
     local FONT="FiraCode"
     local FONT_DIR="$HOME/.local/share/fonts"
-    local NERD_FONT_NAME="FiraCode Nerd Font Mono"
 
-    # Install font
+    # Ensure fontconfig is installed
+    if ! command -v fc-cache >/dev/null; then
+        echo -e "${YELLOW}📦 Installing fontconfig...${NC}"
+        sudo DEBIAN_FRONTEND=noninteractive apt install -y fontconfig
+    fi
+
+    # Create font directory if needed
+    mkdir -p "$FONT_DIR"
+
     if [ ! -f "$FONT_DIR/${FONT}NerdFont-Regular.ttf" ]; then
         echo -e "${YELLOW}📦 Downloading ${FONT} Nerd Font...${NC}"
-        mkdir -p "$FONT_DIR"
         
+        # Install required tools
         if ! command -v unzip >/dev/null; then
             sudo DEBIAN_FRONTEND=noninteractive apt install -y unzip
         fi
 
+        # Download and extract font
         curl -fLo "/tmp/${FONT}.zip" \
             "https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/${FONT}.zip"
         unzip -qo "/tmp/${FONT}.zip" -d "$FONT_DIR"
         rm -f "/tmp/${FONT}.zip"
-        fc-cache -f "$FONT_DIR"
+
+        # Update font cache
+        echo -e "${YELLOW}🔄 Updating font cache...${NC}"
+        fc-cache -f -v "$FONT_DIR"
     fi
 
-    # Auto-configure terminals
-    echo -e "${YELLOW}🖥️ Attempting terminal font configuration...${NC}"
-    
-    # 1. Attempt to detect and configure GNOME Terminal (common in Ubuntu)
-    if command -v gsettings &>/dev/null && [ -d /usr/share/gnome-terminal ]; then
-        echo -e "${YELLOW}  → Configuring GNOME Terminal...${NC}"
-        local PROFILE_PATH="$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d \')"
-        gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${PROFILE_PATH}/" \
-            font "${NERD_FONT_NAME} 12"
+    # Verify font installation
+    if ! fc-list | grep -i "Fira Code" >/dev/null; then
+        echo -e "${RED}⛔ Font installation verification failed!${NC}"
+        exit 1
     fi
 
-    # 2. Configure common config-based terminals
-    configure_terminal_config() {
-        # Alacritty
-        if [ -f "$HOME/.config/alacritty/alacritty.yml" ]; then
-            echo -e "${YELLOW}  → Configuring Alacritty...${NC}"
-            if ! grep -q "family: ${NERD_FONT_NAME}" "$HOME/.config/alacritty/alacritty.yml"; then
-                cp "$HOME/.config/alacritty/alacritty.yml" "$HOME/.config/alacritty/alacritty.yml.bak"
-                printf "\nfont:\n  normal:\n    family: %s\n    style: Regular\n" "$NERD_FONT_NAME" \
-                    >> "$HOME/.config/alacritty/alacritty.yml"
-            fi
-        fi
-
-        # Kitty
-        if [ -f "$HOME/.config/kitty/kitty.conf" ]; then
-            echo -e "${YELLOW}  → Configuring Kitty...${NC}"
-            if ! grep -q "font_family ${NERD_FONT_NAME}" "$HOME/.config/kitty/kitty.conf"; then
-                echo "font_family ${NERD_FONT_NAME}" >> "$HOME/.config/kitty/kitty.conf"
-            fi
-        fi
-    }
-
-    # 3. Configure Linux console (requires root)
-    if [ -d /usr/share/consolefonts ] && [ $(id -u) -eq 0 ]; then
-        echo -e "${YELLOW}  → Configuring console fonts...${NC}"
-        cp "${FONT_DIR}/${FONT}NerdFont-Regular.ttf" /usr/share/consolefonts/
-        setupcon --save-only --force
-    fi
-
-    echo -e "${GREEN}✅ Font configuration attempted. Changes may require terminal restart.${NC}"
+    echo -e "${GREEN}✅ Nerd Font installed successfully.${NC}"
 }
 
 finalize() {
