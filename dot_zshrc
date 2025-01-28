@@ -39,6 +39,6 @@ bindkey "^[[1;5D" backward-word
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 
-# Enable starshhip
+# Enable starship
 export PATH="$HOME/.local/bin:$PATH"
 eval "$(starship init zsh)"
