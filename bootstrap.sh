@@ -73,7 +73,7 @@ install_dependencies() {
         if ! command -v starship >/dev/null; then
             echo -e "${YELLOW}🚀 Installing Starship...${NC}"
             mkdir -p ~/.local/bin
-            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir ~/.local/bin -q
+            sh -c "$(curl -fsSL https://starship.rs/install.sh)" -- --yes --bin-dir ~/.local/bin
             export PATH="$HOME/.local/bin:$PATH"
         fi
     fi
