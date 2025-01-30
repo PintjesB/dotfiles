@@ -126,7 +126,7 @@ setup_cronjob() {
     cat > "$CRON_SCRIPT" <<- 'EOL'
 	#!/bin/bash
 	CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
-	LOG_FILE="$HOME/.chezmoi_cron.log"
+	LOG_FILE="/var/log/chezmoi_cron.log"
 	
 	{
 	    echo "=== Update started: $(date) ==="
@@ -142,7 +142,11 @@ setup_cronjob() {
     echo -e "${YELLOW}⏲️  Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
     if ! crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"; then
         (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
-        echo -e "${GREEN}✓ Cron job added successfully${NC}"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓ Cron job added successfully${NC}"
+        else
+            echo -e "${YELLOW}✗ Failed to add cron job${NC}"
+        fi
     else
         echo -e "${YELLOW}✓ Cron job already exists${NC}"
     fi
