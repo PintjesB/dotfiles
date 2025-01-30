@@ -141,17 +141,22 @@ setup_cronjob() {
     # Ensure user has a crontab before modifying it
     echo -e "${YELLOW}⏲️ Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
 
-    if ! crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"; then
+    # Debug: Print current crontab
+    echo "🔍 Current crontab entries before modification:"
+    crontab -l 2>/dev/null || echo "(No existing crontab found)"
+
+    # Check if the cron job already exists
+    if ! (crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"); then
+        echo "🚨 No existing cron job found for $CRON_SCRIPT"
+        
         # Add cron job
         (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
         
-        if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✓ Cron job added successfully${NC}"
-        else
-            echo -e "${YELLOW}✗ Failed to add cron job${NC}"
-        fi
+        # Verify if it was actually added
+        echo "🔍 Checking crontab contents after adding..."
+        crontab -l
     else
-        echo -e "${YELLOW}✓ Cron job already exists${NC}"
+        echo "✅ Cron job already exists!"
     fi
 }
 
