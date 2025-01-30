@@ -204,5 +204,5 @@ install_dependencies
 install_nerdfont
 setup_shell
 setup_chezmoi
-setup_cronjob
+#setup_cronjob
 finalize
