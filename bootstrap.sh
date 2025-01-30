@@ -142,6 +142,10 @@ setup_cronjob() {
     echo -e "${YELLOW}⏲️ Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
 
     # Debug: Print current crontab
+    echo "CRON_SCHEDULE: $CRON_SCHEDULE"
+    echo "CRON_SCRIPT: $CRON_SCRIPT"
+
+
     echo "🔍 Current crontab entries before modification:"
     crontab -l 2>/dev/null || echo "(No existing crontab found)"
 
