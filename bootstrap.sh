@@ -139,9 +139,12 @@ setup_cronjob() {
     chmod +x "$CRON_SCRIPT"
     
     # Ensure user has a crontab before modifying it
-    echo -e "${YELLOW}⏲️  Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
+    echo -e "${YELLOW}⏲️ Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
+
     if ! crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"; then
+        # Add cron job
         (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
+        
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓ Cron job added successfully${NC}"
         else
