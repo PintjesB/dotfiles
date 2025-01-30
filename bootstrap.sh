@@ -112,11 +112,17 @@ setup_chezmoi() {
 setup_cronjob() {
     echo -e "${BOLD}⏰ Configuring automatic updates...${NC}"
     
-    # Create cron script
+    # Ensure CRON_SCHEDULE is set
+    if [ -z "$CRON_SCHEDULE" ]; then
+        echo -e "${RED}❌ CRON_SCHEDULE is not set! Exiting.${NC}"
+        return 1
+    fi
+    
+    # Define script path
     local CRON_SCRIPT="$HOME/.local/bin/chezmoi-cron.sh"
     echo -e "${YELLOW}📝 Creating cron script at $CRON_SCRIPT${NC}"
     
-    # Using tabs for indentation (not spaces!) with <<- and quoted EOL
+    # Create cron script
     cat > "$CRON_SCRIPT" <<- 'EOL'
 	#!/bin/bash
 	CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
@@ -132,9 +138,9 @@ setup_cronjob() {
 
     chmod +x "$CRON_SCRIPT"
     
-    # Add cron job
+    # Ensure user has a crontab before modifying it
     echo -e "${YELLOW}⏲️  Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
-    if ! crontab -l | grep -q "$CRON_SCRIPT"; then
+    if ! crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"; then
         (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
         echo -e "${GREEN}✓ Cron job added successfully${NC}"
     else
