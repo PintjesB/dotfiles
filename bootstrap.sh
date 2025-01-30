@@ -145,7 +145,6 @@ setup_cronjob() {
     echo "CRON_SCHEDULE: $CRON_SCHEDULE"
     echo "CRON_SCRIPT: $CRON_SCRIPT"
 
-
     echo "🔍 Current crontab entries before modification:"
     crontab -l 2>/dev/null || echo "(No existing crontab found)"
 
