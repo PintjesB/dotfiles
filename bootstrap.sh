@@ -154,7 +154,7 @@ setup_cronjob() {
 
     # Debug: Show full cron line
     local FULL_CRON_LINE="$CRON_SCHEDULE $CRON_SCRIPT"
-    echo -e "${CYAN}ℹ️ Attempting to add:${NC}"
+    echo -e "${YELLOW}ℹ️ Attempting to add:${NC}"
     echo -e "${WHITE}\$ $FULL_CRON_LINE${NC}"
 
     # Add to crontab with error checking
