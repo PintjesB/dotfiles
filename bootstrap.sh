@@ -126,9 +126,9 @@ setup_cronjob() {
     cat > "$CRON_SCRIPT" <<- EOL
 	#!/bin/bash
 	# Load user environment explicitly
-	source "$HOME/.bashrc"
+	source "\$HOME/.bashrc"
 	# Full path to chezmoi
-	CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
+	CHEZMOI_BIN="\$HOME/.local/bin/chezmoi"
 	LOG_FILE="/var/log/chezmoi_cron.log"
 	
 	{
@@ -154,15 +154,15 @@ setup_cronjob() {
 
     # Debug: Show full cron line
     local FULL_CRON_LINE="$CRON_SCHEDULE $CRON_SCRIPT"
-    echo -e "${YELLOW}ℹ️ Attempting to add:${NC}"
-    echo -e "${WHITE}\$ $FULL_CRON_LINE${NC}"
+    echo -e "${BOLD}ℹ️ Attempting to add:${NC}"
+    echo -e "  $FULL_CRON_LINE"
 
     # Add to crontab with error checking
     echo "🔍 Current crontab:"
     $CRONTAB_CMD -l 2>/dev/null || echo "(No existing crontab)"
 
     if ! $CRONTAB_CMD -l 2>/dev/null | grep -qF "$CRON_SCRIPT"; then
-        echo "🚨 No existing cron job found - adding new entry"
+        echo -e "${YELLOW}🚨 No existing cron job found - adding new entry${NC}"
         
         # Add with error checking
         ($CRONTAB_CMD -l 2>/dev/null; echo "$FULL_CRON_LINE") | $CRONTAB_CMD - || {
@@ -171,10 +171,10 @@ setup_cronjob() {
         }
         
         # Verify addition
-        echo -e "${GREEN}✅ Crontab updated. New contents:${NC}"
+        echo -e "${BOLD}✅ Crontab updated. New contents:${NC}"
         $CRONTAB_CMD -l
     else
-        echo -e "${GREEN}✅ Cron job already exists!${NC}"
+        echo -e "${BOLD}✅ Cron job already exists!${NC}"
     fi
 
     # Ensure cron service is running (for systems with systemd)
