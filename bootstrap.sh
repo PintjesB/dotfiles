@@ -122,44 +122,67 @@ setup_cronjob() {
     local CRON_SCRIPT="$HOME/.local/bin/chezmoi-cron.sh"
     echo -e "${YELLOW}📝 Creating cron script at $CRON_SCRIPT${NC}"
     
-    # Create cron script
-    cat > "$CRON_SCRIPT" <<- 'EOL'
+    # Create cron script with proper environment awareness
+    cat > "$CRON_SCRIPT" <<- EOL
 	#!/bin/bash
+	# Load user environment explicitly
+	source "$HOME/.bashrc"
+	# Full path to chezmoi
 	CHEZMOI_BIN="$HOME/.local/bin/chezmoi"
 	LOG_FILE="/var/log/chezmoi_cron.log"
 	
 	{
-	    echo "=== Update started: $(date) ==="
-	    "$CHEZMOI_BIN" update --verbose
-	    echo "=== Update completed: $(date) ==="
+	    echo "=== Update started: \$(date) ==="
+	    "\$CHEZMOI_BIN" update --verbose
+	    echo "=== Update completed: \$(date) ==="
 	    echo ""
-	} >> "$LOG_FILE" 2>&1
+	} >> "\$LOG_FILE" 2>&1
 	EOL
 
     chmod +x "$CRON_SCRIPT"
     
-    # Ensure user has a crontab before modifying it
+    # Use absolute path to crontab
+    local CRONTAB_CMD="/usr/bin/crontab"
+    
     echo -e "${YELLOW}⏲️ Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
 
-    # Debug: Print current crontab
-    echo "CRON_SCHEDULE: $CRON_SCHEDULE"
-    echo "CRON_SCRIPT: $CRON_SCRIPT"
+    # Validate cron schedule format first
+    if ! [[ "$CRON_SCHEDULE" =~ ^[0-9,*/-]+\ [0-9,*/-]+\ [0-9,*/-]+\ [0-9,*/-]+\ [0-9,*/-]+$ ]]; then
+        echo -e "${RED}❌ Invalid CRON_SCHEDULE format!${NC}"
+        return 1
+    fi
 
-    echo "🔍 Current crontab entries before modification:"
-    crontab -l 2>/dev/null || echo "(No existing crontab found)"
+    # Debug: Show full cron line
+    local FULL_CRON_LINE="$CRON_SCHEDULE $CRON_SCRIPT"
+    echo -e "${CYAN}ℹ️ Attempting to add:${NC}"
+    echo -e "${WHITE}\$ $FULL_CRON_LINE${NC}"
 
-    # Check if the cron job already exists
-    if ! (crontab -l 2>/dev/null | grep -q "$CRON_SCRIPT"); then
-        echo "🚨 No existing cron job found for $CRON_SCRIPT"
+    # Add to crontab with error checking
+    echo "🔍 Current crontab:"
+    $CRONTAB_CMD -l 2>/dev/null || echo "(No existing crontab)"
+
+    if ! $CRONTAB_CMD -l 2>/dev/null | grep -qF "$CRON_SCRIPT"; then
+        echo "🚨 No existing cron job found - adding new entry"
         
-        # Add cron job
-        (crontab -l 2>/dev/null; echo "$CRON_SCHEDULE $CRON_SCRIPT") | crontab -
+        # Add with error checking
+        ($CRONTAB_CMD -l 2>/dev/null; echo "$FULL_CRON_LINE") | $CRONTAB_CMD - || {
+            echo -e "${RED}❌ Failed to update crontab!${NC}"
+            return 1
+        }
         
-        # Verify if it was actually added
-        echo "🔍 Checking crontab contents after adding..."
-        crontab -l
+        # Verify addition
+        echo -e "${GREEN}✅ Crontab updated. New contents:${NC}"
+        $CRONTAB_CMD -l
     else
-        echo "✅ Cron job already exists!"
+        echo -e "${GREEN}✅ Cron job already exists!${NC}"
+    fi
+
+    # Ensure cron service is running (for systems with systemd)
+    if systemctl is-active cron.service >/dev/null 2>&1 || systemctl is-active crond.service >/dev/null 2>&1; then
+        echo "Cron service is running"
+    else
+        echo -e "${RED}⚠️ Cron service not running! Attempting to start..."
+        sudo systemctl start cron.service || sudo systemctl start crond.service
     fi
 }
 
