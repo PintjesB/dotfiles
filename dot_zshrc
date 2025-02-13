@@ -42,3 +42,7 @@ source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 # Enable starship
 export PATH="$HOME/.local/bin:$PATH"
 eval "$(starship init zsh)"
+
+# Enable multiline command pasting
+autoload -Uz bracketed-paste-magic
+zle -N bracketed-paste bracketed-paste-magic
