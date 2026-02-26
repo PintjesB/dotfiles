@@ -142,7 +142,7 @@ setup_cronjob() {
     chmod +x "$CRON_SCRIPT"
     
     # Use absolute path to crontab
-    local CRONTAB_CMD="/usr/bin/crontab"
+    local CRONTAB_CMD="sudo /usr/bin/crontab"
     
     echo -e "${YELLOW}⏲️ Adding cron job (schedule: $CRON_SCHEDULE)${NC}"
 
