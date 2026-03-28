@@ -68,8 +68,15 @@ install_dependencies() {
     else
         case $PLATFORM in
             debian)
-                sudo DEBIAN_FRONTEND=noninteractive apt update -y
-                sudo DEBIAN_FRONTEND=noninteractive apt install -y \
+                # Repair any interrupted dpkg state before touching apt
+                if sudo dpkg --configure -a 2>&1 | grep -q "dpkg was interrupted"; then
+                    echo -e "${RED}❌ Could not repair dpkg state automatically. Run 'sudo dpkg --configure -a' manually.${NC}" >&2
+                    exit 1
+                fi
+                sudo dpkg --configure -a
+                sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
+                sudo DEBIAN_FRONTEND=noninteractive apt-get install -f -y  # fix broken deps
+                sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
                     zsh git curl unzip fontconfig \
                     zsh-syntax-highlighting zsh-autosuggestions
                 ;;
