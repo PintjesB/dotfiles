@@ -77,7 +77,7 @@ install_dependencies() {
                 sudo DEBIAN_FRONTEND=noninteractive apt-get update -y
                 sudo DEBIAN_FRONTEND=noninteractive apt-get install -f -y  # fix broken deps
                 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                    zsh git curl unzip fontconfig \
+                    zsh git curl unzip fontconfig cron \
                     zsh-syntax-highlighting zsh-autosuggestions
                 ;;
             fedora)
@@ -183,6 +183,19 @@ EOF
         echo -e "${GREEN}✅ Cron job added.${NC}"
     else
         echo -e "${GREEN}✅ Cron job already exists.${NC}"
+    fi
+
+    # Ensure cron daemon is running (absent on minimal Ubuntu cloud images)
+    if command -v systemctl >/dev/null 2>&1; then
+        if ! systemctl is-enabled cron >/dev/null 2>&1; then
+            echo -e "${YELLOW}⚙️ Enabling cron service...${NC}"
+            sudo systemctl enable cron
+        fi
+        if ! systemctl is-active cron >/dev/null 2>&1; then
+            echo -e "${YELLOW}▶️ Starting cron service...${NC}"
+            sudo systemctl start cron
+        fi
+        echo -e "${GREEN}✅ Cron service is running.${NC}"
     fi
 }
 
