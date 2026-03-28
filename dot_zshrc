@@ -1,15 +1,27 @@
-# Set up the prompt
-setopt histignorealldups sharehistory
-
-# Use emacs keybindings even if our EDITOR is set to vi
-bindkey -e
-
-# Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
-HISTSIZE=1000
-SAVEHIST=1000
+# ─────────────────────────────────────────────
+# History
+# ─────────────────────────────────────────────
+HISTSIZE=10000
+SAVEHIST=10000
 HISTFILE=~/.zsh_history
+setopt histignorealldups   # Don't record duplicate commands
+setopt sharehistory        # Share history across sessions
+setopt hist_ignore_space   # Don't record commands starting with a space
+setopt hist_reduce_blanks  # Remove extra blanks from history
 
-# Use modern completion system
+# ─────────────────────────────────────────────
+# Key bindings
+# ─────────────────────────────────────────────
+bindkey -e                     # Emacs key bindings
+bindkey "^[[1;5C" forward-word  # CTRL+Right
+bindkey "^[[1;5D" backward-word # CTRL+Left
+bindkey "^[[H"    beginning-of-line  # Home
+bindkey "^[[F"    end-of-line        # End
+bindkey "^[[3~"   delete-char        # Delete key
+
+# ─────────────────────────────────────────────
+# Completion
+# ─────────────────────────────────────────────
 autoload -Uz compinit
 compinit
 
@@ -18,31 +30,90 @@ zstyle ':completion:*' completer _expand _complete _correct _approximate
 zstyle ':completion:*' format 'Completing %d'
 zstyle ':completion:*' group-name ''
 zstyle ':completion:*' menu select=2
-eval "$(dircolors -b)"
-zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
-zstyle ':completion:*' list-colors ''
-zstyle ':completion:*' list-prompt %SAt %p: Hit TAB for more, or the character to insert%s
+zstyle ':completion:*' list-prompt '%SAt %p: Hit TAB for more, or the character to insert%s'
 zstyle ':completion:*' matcher-list '' 'm:{a-z}={A-Z}' 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=* l:|=*'
-zstyle ':completion:*' menu select=long
-zstyle ':completion:*' select-prompt %SScrolling active: current selection at %p%s
+zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
 zstyle ':completion:*' use-compctl false
 zstyle ':completion:*' verbose true
-
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
-# CTRL + arrows fix
-bindkey "^[[1;5C" forward-word
-bindkey "^[[1;5D" backward-word
+# LS colors (Linux only — dircolors doesn't exist on macOS)
+if command -v dircolors >/dev/null 2>&1; then
+    eval "$(dircolors -b)"
+    zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+    zstyle ':completion:*' list-colors ''
+fi
 
-# Enable plugins
-source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-# Enable starship
+# ─────────────────────────────────────────────
+# PATH
+# ─────────────────────────────────────────────
 export PATH="$HOME/.local/bin:$PATH"
-eval "$(starship init zsh)"
 
-# Enable multiline command pasting
+# Homebrew (macOS)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ -f /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -f /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+fi
+
+# ─────────────────────────────────────────────
+# Plugins — cross-platform paths
+# ─────────────────────────────────────────────
+_source_if_exists() { [[ -f "$1" ]] && source "$1"; }
+
+# zsh-syntax-highlighting
+_source_if_exists /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+_source_if_exists /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+_source_if_exists /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# zsh-autosuggestions
+_source_if_exists /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+_source_if_exists /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+_source_if_exists /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# ─────────────────────────────────────────────
+# Aliases
+# ─────────────────────────────────────────────
+alias ll='ls -lhF --color=auto'
+alias la='ls -lahF --color=auto'
+alias l='ls -CF --color=auto'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias mkdir='mkdir -p'
+alias grep='grep --color=auto'
+
+# macOS: use gls if available (from coreutils), otherwise fall back to bsd ls
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if command -v gls >/dev/null 2>&1; then
+        alias ll='gls -lhF --color=auto'
+        alias la='gls -lahF --color=auto'
+        alias l='gls -CF --color=auto'
+    else
+        alias ll='ls -lhF'
+        alias la='ls -lahF'
+        alias l='ls -CF'
+    fi
+fi
+
+# chezmoi shortcuts
+alias cz='chezmoi'
+alias czcd='chezmoi cd'
+alias czd='chezmoi diff'
+alias cza='chezmoi apply'
+alias czu='chezmoi update'
+
+# ─────────────────────────────────────────────
+# Bracketed paste (safe multiline pasting)
+# ─────────────────────────────────────────────
 autoload -Uz bracketed-paste-magic
 zle -N bracketed-paste bracketed-paste-magic
+
+# ─────────────────────────────────────────────
+# Starship prompt (must be last)
+# ─────────────────────────────────────────────
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init zsh)"
+fi
