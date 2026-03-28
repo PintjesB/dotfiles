@@ -29,10 +29,11 @@ detect_platform() {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         if [ -f /etc/os-release ]; then
             source /etc/os-release
+            DISTRO_NAME="${PRETTY_NAME:-$ID}"  # e.g. "Ubuntu 24.04 LTS"
             case $ID in
-                debian|ubuntu|pop) PLATFORM="debian" ;;
-                fedora|rhel|centos) PLATFORM="fedora" ;;
-                arch|manjaro) PLATFORM="arch" ;;
+                debian|ubuntu|pop) PLATFORM="apt" ;;
+                fedora|rhel|centos) PLATFORM="dnf" ;;
+                arch|manjaro)       PLATFORM="pacman" ;;
                 *) echo -e "${RED}⛔ Unsupported Linux distro: $ID${NC}" >&2; exit 1 ;;
             esac
         else
@@ -41,11 +42,12 @@ detect_platform() {
         fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         PLATFORM="macos"
+        DISTRO_NAME="macOS"
     else
         echo -e "${RED}⛔ Unsupported OS: $OSTYPE${NC}" >&2
         exit 1
     fi
-    echo -e "${GREEN}✅ Detected platform: $PLATFORM${NC}"
+    echo -e "${GREEN}✅ Detected: $DISTRO_NAME (package manager: $PLATFORM)${NC}"
 }
 
 # ─────────────────────────────────────────────
@@ -67,7 +69,7 @@ install_dependencies() {
         brew install zsh-syntax-highlighting zsh-autosuggestions
     else
         case $PLATFORM in
-            debian)
+            apt)
                 # Repair any interrupted dpkg state before touching apt
                 if sudo dpkg --configure -a 2>&1 | grep -q "dpkg was interrupted"; then
                     echo -e "${RED}❌ Could not repair dpkg state automatically. Run 'sudo dpkg --configure -a' manually.${NC}" >&2
@@ -80,12 +82,12 @@ install_dependencies() {
                     zsh git curl unzip fontconfig cron \
                     zsh-syntax-highlighting zsh-autosuggestions
                 ;;
-            fedora)
+            dnf)
                 sudo dnf install -y \
                     zsh git curl unzip fontconfig \
                     zsh-syntax-highlighting zsh-autosuggestions
                 ;;
-            arch)
+            pacman)
                 sudo pacman -Sy --noconfirm \
                     zsh git curl unzip fontconfig \
                     zsh-syntax-highlighting zsh-autosuggestions
