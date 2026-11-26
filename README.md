@@ -88,3 +88,15 @@ The bootstrap script installs a background job that runs `chezmoi update` daily 
 - **Linux:** cron job — view with `crontab -l`
 - **macOS:** launchd agent — at `~/Library/LaunchAgents/io.chezmoi.update.plist`
 - **Log:** `~/.local/log/chezmoi-update.log`
+
+## Host-specific additions (servers and workstations)
+
+Keep machine-specific aliases, functions, and environment settings in `~/.zshrc.local`.
+For a completely custom Starship theme, use `~/.config/starship.local.toml`.
+Neither file belongs in the shared repository. Back up and review existing local
+edits to managed files before moving them to these locations; do not overwrite
+an existing local file or blindly copy another user's configuration.
+
+On Ansible-managed servers the bootstrap owns dependency provisioning, while
+Chezmoi owns the shared dotfiles. Use a reviewed revision and do not introduce
+an independent automatic updater on servers with unreviewed local changes.

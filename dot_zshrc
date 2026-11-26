@@ -112,8 +112,17 @@ autoload -Uz bracketed-paste-magic
 zle -N bracketed-paste bracketed-paste-magic
 
 # ─────────────────────────────────────────────
-# Starship prompt (must be last)
+# Starship prompt (host-local theme is optional)
 # ─────────────────────────────────────────────
+if [[ -z "${STARSHIP_CONFIG:-}" && -r "$HOME/.config/starship.local.toml" ]]; then
+    export STARSHIP_CONFIG="$HOME/.config/starship.local.toml"
+fi
 if command -v starship >/dev/null 2>&1; then
     eval "$(starship init zsh)"
+fi
+
+# Host-specific aliases, functions and overrides are not managed by chezmoi.
+# Keep additions in this separate file so shared dotfiles can be updated safely.
+if [[ -r "$HOME/.zshrc.local" ]]; then
+    source "$HOME/.zshrc.local"
 fi
